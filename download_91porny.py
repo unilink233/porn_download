@@ -24,6 +24,7 @@ def get_uid_and_title(url):
             uid = num_only(api_result['thumbnailUrl'].split('/')[-1])
             title = soup.title.text.split(' - 91视频')[0]
             return uid, valid_filename(title)
+    return None, None
 
 
 def check_hd(uid):
