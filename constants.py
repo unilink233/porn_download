@@ -17,4 +17,4 @@ convert_after_download = False
 ext = '.mp4' if convert_after_download else '.ts'
 
 # use 91porny cdn instead of 91porn to increase download speed.
-use_91porny_if_possible = False
+use_91porny_if_possible = True
