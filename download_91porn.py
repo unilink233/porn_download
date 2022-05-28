@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup as bs
 from selenium.webdriver import ChromeOptions
 from urllib.parse import urlparse, parse_qs
 
-from common import download, valid_filename, video_merge
+from common import valid_filename, video_merge, download_ts
 from constants import download_path, chrome_driver_path, cache_path, use_91porny_if_possible
 from selenium_update import ChromeDriver
 from download_91porny import download_91porny, get_uid_and_title
@@ -26,21 +26,6 @@ def get_ts_urls(uid, cdn_url=DEFAULT_CDN):
     r = requests.get(url)
     if r.ok:
         return ["{}/{}/{}".format(cdn_url, uid, ts_filename) for ts_filename in r.text.split('\n') if valid_ts_filename(ts_filename)]
-
-
-def download_ts(urls, download_path, uid):
-    paths = []
-    for idx, url in enumerate(urls):
-        print('\rDownloading [{}/{}] videos'.format(idx + 1, len(urls)), end='')
-        download_file_path = download(
-            url, 
-            os.path.abspath(os.path.join(download_path, "{}_{}.ts".format(uid, idx)))
-        )
-
-        if os.path.exists(download_file_path):
-            paths.append(download_file_path)
-    print('\n')
-    return paths
 
 
 def get_info(url, driver):

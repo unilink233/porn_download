@@ -1,6 +1,8 @@
 import os
+import uuid
 import shutil
 import requests
+import subprocess
 
 
 def num_only(string):
@@ -63,3 +65,46 @@ def video_merge(ts_files, output_path, output_filename, delete_after_merge=True)
                     print('Error Occur when delete {}, error: {}'.format(ts_file, e))
     else:
         print('Video Merge fail, ts file list: \n{}'.format('\n'.join(ts_files)))
+
+
+def download_ts(urls, download_path, uid):
+    paths = []
+    for idx, url in enumerate(urls):
+        print('\rDownloading [{}/{}] videos'.format(idx + 1, len(urls)), end='')
+        download_file_path = download(
+            url, 
+            os.path.abspath(os.path.join(download_path, "{}_{}.ts".format(uid, idx)))
+        )
+
+        if os.path.exists(download_file_path):
+            paths.append(download_file_path)
+    print('\n')
+    return paths
+
+
+def video_merge_ffmpeg(file_list, output_path, output_filename, delete_after_merge=True):
+    print('File List: \n  {}'.format('\n  '.join(file_list)))
+    input_file = os.path.abspath(
+        os.path.join(
+            '.',
+            '{}.txt'.format(str(uuid.uuid4()).replace('-', '').upper()[:10]))
+        )
+
+    with open(input_file, 'w', encoding='utf-8', errors='ignore') as txtw:
+        for file_name in file_list:
+            txtw.write("file '{}'\n".format(file_name))
+    
+    output_path = check_exist_file(os.path.join(output_path, output_filename + '.ts'))
+
+    cmd = f'ffmpeg -f concat -safe 0 -i "{input_file}" -c copy {output_path}'
+
+    subprocess.run(cmd, timeout=float(3600), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    os.remove(input_file)
+    if delete_after_merge:
+        for file_name in file_list:
+            try:
+                # print('start to delete: {}'.format(file_name))
+                os.remove(file_name)
+            except Exception as e:
+                print('delete file {} fail:{}'.format(file_name, e))
+    print("{}'s video has been processed.".format(output_path))
