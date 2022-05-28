@@ -36,13 +36,13 @@ class ChromeDriver(object):
 
     def _check_version_exist(self, chrome_driver_path, version):
         """ Check if a specific or latest version in driver path """
-        # if specific version in local driver path
         for file_name in os.listdir(chrome_driver_path):
-            if 'chromedriver{}'.format(version) in file_name:
-                return True
-        return False
+            return True if f'chromedriver{version}' in file_name else False
     
     def _get_chrome_version(self):
+        """
+            Get minor version
+        """
         import winreg
         try:
             # 从注册表中获得版本号
@@ -77,6 +77,11 @@ class ChromeDriver(object):
         else:
             version = self._get_latest_version_of_major_version(version.split('.')[0])
 
+        webdriver_path = os.path.join(chrome_driver_path, 'chromedriver{}.exe'.format(version))
+        if os.path.exists(webdriver_path):
+            print('version: {} driver already exist.'.format(version))
+            return
+
         # download webdriver
         driver_url = "https://chromedriver.storage.googleapis.com/{}/chromedriver_win32.zip".format(version)
         
@@ -89,9 +94,6 @@ class ChromeDriver(object):
         self._download_file(driver_url, download_path)
         
         self._unzip_file(download_path, temp_path, delete_zip=True)
-
-        # rename and move driver to driver path
-        webdriver_path = os.path.join(chrome_driver_path, 'chromedriver{}.exe'.format(version))
 
         os.rename(os.path.join(temp_path, 'chromedriver.exe'), webdriver_path)
 
@@ -118,46 +120,51 @@ class ChromeDriver(object):
                 print('Update chrome driver fail: {}'.format(e))
 
     def _get_driver_file(self, chrome_driver_path):
-        """ get driver path  """
+        """ get driver file abs path from chrome_driver_path"""
         chrome_version = self._get_chrome_version()
-        drivers_match_chrome_version = [
-            key for key in os.listdir(chrome_driver_path) if '.exe' in key and 'chromedriver' in key and "chromedriver{}".format(chrome_version) in key]
-        drivers_not_match_chrome_version = [
-            key for key in os.listdir(chrome_driver_path) if '.exe' in key and 'chromedriver' in key and "chromedriver{}".format(chrome_version) not in key]
+        drivers_match_chrome_version, drivers_not_match_chrome_version = [], []
+        for key in os.listdir(chrome_driver_path): 
+            if 'chromedriver' in key:
+                # match current chrome version
+                if "chromedriver{}".format(chrome_version) in key:
+                    drivers_match_chrome_version.append(os.path.abspath(
+                        os.path.join(chrome_driver_path, key)
+                    ))
+                # not match current version
+                else:
+                    drivers_not_match_chrome_version.append(os.path.abspath(
+                        os.path.join(chrome_driver_path, key)
+                    ))
         drivers_not_match_chrome_version.sort(reverse=True)
         return drivers_match_chrome_version + drivers_not_match_chrome_version
 
-    def get_driver(self, chrome_driver_path, chrome_options=None):
+    def get_driver(self, chrome_driver_path, **kargs):
         """ Search available webdriver in path"""
         chrome_driver_filenames = self._get_driver_file(chrome_driver_path)
 
         for chrome_driver_filename in chrome_driver_filenames:
             try:
-                driver_path = os.path.abspath(os.path.join(chrome_driver_path, chrome_driver_filename))
-                driver = webdriver.Chrome(driver_path, chrome_options=chrome_options)
+                driver = webdriver.Chrome(chrome_driver_filename, **kargs)
                 return driver
             except SessionNotCreatedException as e:
                 continue
             except Exception as e:
                 continue
 
-    def update_and_get_driver(self, chrome_driver_path, chrome_options=None, raise_error=True):
+    def update_and_get_driver(self, chrome_driver_path, chrome_options=None, raise_error=True, **kargs):
         """ update driver then get webdriver """
-        driver = self.get_driver(chrome_driver_path, chrome_options=chrome_options)
-        if driver:
-            return driver
-
+        # check version
         chrome_version = self._get_chrome_version()
-
         if not self._check_version_exist(chrome_driver_path, version=chrome_version):
             print('Downloading Chrome Version: {} webdriver.'.format(chrome_version))
             self.update(chrome_driver_path, version=chrome_version, raise_error=raise_error)
 
-        driver = self.get_driver(chrome_driver_path, chrome_options=chrome_options)
-        if not driver:
-            print('Cannot find available chrome driver, please download it to {}'.format(chrome_driver_path))
-        return driver
-
+        driver = self.get_driver(chrome_driver_path, chrome_options=chrome_options, **kargs)
+        if driver:
+            return driver
+        else:
+            raise DriverUpdateException('Cannot find available chrome driver, please download it to {}'.format(chrome_driver_path))
+        
 
 if __name__ == "__main__":
     ChromeDriver().update_and_get_driver('.')
