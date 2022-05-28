@@ -83,7 +83,7 @@ def download_ts(urls, download_path, uid):
 
 
 def video_merge_ffmpeg(file_list, output_path, output_filename, delete_after_merge=True):
-    print('File List: \n  {}'.format('\n  '.join(file_list)))
+    # print('File List: \n  {}'.format('\n  '.join(file_list)))
     input_file = os.path.abspath(
         os.path.join(
             '.',

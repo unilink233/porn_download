@@ -66,22 +66,30 @@ def get_title(title):
     return title
 
 
-def download_iyf(url):
+def download_iyf(url, try_times=3):
     caps = DesiredCapabilities.CHROME
     caps['goog:loggingPrefs'] = {'performance': 'ALL'}
     driver = ChromeDriver().update_and_get_driver(chrome_driver_path, desired_capabilities=caps)
 
     driver.get(url)
     m3u8_url = get_m3u8(driver.get_log('performance'))
-    if not m3u8_url:
-        print('Parse Fail with url: {}'.format(url))
+    
+    if not m3u8_url and try_times > 0:
+        try_times -= 1
+        print('Parse Fail with url: {}, try: {}'.format(url, try_times))
+        driver.quit()
+        download_iyf(url, try_times=try_times)
+        return
     ts_urls = parse_m3u8(m3u8_url)
     title = valid_filename(get_title(driver.title))
 
     uid = str(uuid4()).replace('-', '').upper()[:10]
     ts_files = download_ts(ts_urls, cache_path, uid)
 
+    driver.quit()
+
     video_merge_ffmpeg(ts_files, download_path, title)
+    
 
 
 if __name__ == '__main__':
