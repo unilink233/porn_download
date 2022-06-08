@@ -38,9 +38,6 @@ def parse_m3u8(path):
 
 
 def main(m3u8_path, cdn_url, title):
-    print(m3u8_path)
-    print(cdn_url)
-    print(title)
     ts_urls = [cdn_url + ts_file for ts_file in parse_m3u8(m3u8_path)]
     if not ts_urls:
         print('M3U8 {} does not have any valid row.'.format(m3u8_path))
