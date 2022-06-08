@@ -7,7 +7,7 @@ import requests
 from sys import argv
 from bs4 import BeautifulSoup as bs
 
-from common import num_only, download, video_merge, valid_filename
+from common import num_only, download, valid_filename, video_merge_ffmpeg
 from constants import download_path, cache_path
 
 
@@ -90,7 +90,7 @@ def download_91porny(url):
 
     file_names = get_sorted_ts_filelist(file_list)
     
-    video_merge(file_names, download_path, title)
+    video_merge_ffmpeg(file_names, download_path, title)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup as bs
 from selenium.webdriver import ChromeOptions
 from urllib.parse import urlparse, parse_qs
 
-from common import valid_filename, video_merge, download_ts
+from common import valid_filename, download_ts, video_merge_ffmpeg
 from constants import download_path, chrome_driver_path, cache_path, use_91porny_if_possible
 from selenium_update import ChromeDriver
 from download_91porny import download_91porny, get_uid_and_title
@@ -78,7 +78,7 @@ def download_91porn(url):
     
     ts_files = download_ts(ts_urls, cache_path, uid)
 
-    video_merge(ts_files, download_path, title)
+    video_merge_ffmpeg(ts_files, download_path, title)
 
 
 if __name__ == '__main__':
