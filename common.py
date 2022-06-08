@@ -20,6 +20,8 @@ def valid_filename(string):
             string = string.replace(char, '')
     return string
 
+def generate_uid():
+    return str(uuid.uuid4()).replace('-', '').upper()[:10]
 
 def check_exist_file(dest_file_path):
     if os.path.exists(dest_file_path):
@@ -67,13 +69,15 @@ def video_merge(ts_files, output_path, output_filename, delete_after_merge=True)
         print('Video Merge fail, ts file list: \n{}'.format('\n'.join(ts_files)))
 
 
-def download_ts(urls, download_path, uid):
+def download_ts(urls, cache_path, logout=False):
+    uid = generate_uid()
     paths = []
     for idx, url in enumerate(urls):
-        print('\rDownloading [{}/{}] videos'.format(idx + 1, len(urls)), end='')
+        if logout:
+            print('\rDownloading [{}/{}] videos'.format(idx + 1, len(urls)), end='')
         download_file_path = download(
             url, 
-            os.path.abspath(os.path.join(download_path, "{}_{}.ts".format(uid, idx)))
+            os.path.abspath(os.path.join(cache_path, "{}_{}.ts".format(uid, idx)))
         )
 
         if os.path.exists(download_file_path):
@@ -97,17 +101,17 @@ def video_merge_ffmpeg(file_list, output_path, output_filename, delete_after_mer
     input_file = os.path.abspath(
         os.path.join(
             '.',
-            '{}.txt'.format(str(uuid.uuid4()).replace('-', '').upper()[:10]))
+            '{}.txt'.format(generate_uid()))
         )
     if use_origin_ext:
         ext = os.path.splitext(file_list[0])[1]
     with open(input_file, 'w', encoding='utf-8', errors='ignore') as txtw:
         for file_name in file_list:
             txtw.write("file '{}'\n".format(file_name))
-    output_path = os.path.join(output_path, output_filename + ext)
+    output_path = check_exist_file(os.path.join(output_path, output_filename + ext))
     base_path = os.path.join(os.path.dirname(__file__), 'ffmpeg.exe')
-    cmd = f'{base_path} -f concat -safe 0 -i "{input_file}" -c copy {output_path}'
-
+    cmd = f'{base_path} -f concat -safe 0 -i "{input_file}" -c copy -y "{output_path}"'
+    print(cmd)
     subprocess.run(cmd, timeout=float(3600), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     os.remove(input_file)
     if delete_after_merge:

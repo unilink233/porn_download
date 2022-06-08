@@ -2,7 +2,7 @@ import os
 import uuid
 import requests
 
-from common import valid_filename, download, video_merge_ffmpeg
+from common import valid_filename, video_merge_ffmpeg, download_ts
 from constants import cache_path, download_path
 
 
@@ -38,22 +38,17 @@ def parse_m3u8(path):
 
 
 def main(m3u8_path, cdn_url, title):
-    ts_files = parse_m3u8(m3u8_path)
-    if not ts_files:
+    print(m3u8_path)
+    print(cdn_url)
+    print(title)
+    ts_urls = [cdn_url + ts_file for ts_file in parse_m3u8(m3u8_path)]
+    if not ts_urls:
         print('M3U8 {} does not have any valid row.'.format(m3u8_path))
         return
-    
-    ts_urls = [cdn_url + ts_file for ts_file in ts_files]
 
-    random_prefix = str(uuid.uuid4()).upper()[:5]
-    file_list = []
-    for idx, url in enumerate(ts_urls):
-        filename = f'{random_prefix}_{str(idx).zfill(len(str(len(ts_urls))))}.ts'
-        file_list.append(os.path.join(cache_path, filename))
-        download(url, os.path.join(cache_path, filename))
-        print(f'[{idx}/{len(ts_urls)}] Downloading')
-    
+    file_list = download_ts(ts_urls, cache_path, logout=True)
     video_merge_ffmpeg(file_list, download_path, title, delete_after_merge=True)
+
 
 def input_param():
     m3u8_path = input('M3U8 PATH OR URL: ')
