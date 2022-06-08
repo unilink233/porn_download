@@ -56,7 +56,7 @@ def main(m3u8_path, cdn_url, title):
     video_merge_ffmpeg(file_list, download_path, title, delete_after_merge=True)
 
 def input_param():
-    m3u8_path = os.path.abspath(input('M3U8 PATH OR URL: '))
+    m3u8_path = input('M3U8 PATH OR URL: ')
 
     cdn_url = input("CDN URL: ")
     if cdn_url[-1] != '/':
