@@ -105,7 +105,8 @@ def video_merge_ffmpeg(file_list, output_path, output_filename, delete_after_mer
         for file_name in file_list:
             txtw.write("file '{}'\n".format(file_name))
     output_path = os.path.join(output_path, output_filename + ext)
-    cmd = f'ffmpeg -f concat -safe 0 -i "{input_file}" -c copy {output_path}'
+    base_path = os.path.join(os.path.dirname(__file__), 'ffmpeg.exe')
+    cmd = f'{base_path} -f concat -safe 0 -i "{input_file}" -c copy {output_path}'
 
     subprocess.run(cmd, timeout=float(3600), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     os.remove(input_file)
